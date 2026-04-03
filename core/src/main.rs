@@ -11,10 +11,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Status: ✅ Ready");
     println!("Listening on: 0.0.0.0:5000");
     println!("Platform: Linux/Windows Portable\n");
-    
+
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await?;
     println!("📡 Server started. Waiting for clients...");
-    
+
     loop {
         match listener.accept().await {
             Ok((socket, addr)) => {
@@ -26,14 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn handle_client(
-    mut socket: tokio::net::TcpStream,
-    addr: SocketAddr,
-) {
-    use tokio::io;
-    
+async fn handle_client(mut socket: tokio::net::TcpStream, addr: SocketAddr) {
     let mut buf = [0_u8; 4096];
-    
+
     loop {
         match socket.read(&mut buf).await {
             Ok(0) => {
