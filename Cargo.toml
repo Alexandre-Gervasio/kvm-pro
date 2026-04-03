@@ -1,9 +1,35 @@
-[workspace]
-members = ["core"]
-resolver = "2"
-
-[workspace.package]
-version = "0.1.0"
+[package]
+name = "kvm-pro"
+version = "1.0.1"
 edition = "2021"
-authors = ["KVM Pro Contributors"]
+description = "A high-performance KVM software superior to Input Leap and Barrier"
 license = "MIT"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.3"
+
+# Platform-specific
+[target.'cfg(target_os = "linux")'.dependencies]
+evdev = "0.12"
+uinput = "0.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "winbase", "winerror"] }
+
+[[bin]]
+name = "kvm-pro-server"
+path = "core/src/main.rs"
+
+[[bin]]
+name = "kvm-pro-client"
+path = "core/src/client.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

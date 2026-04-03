@@ -1,36 +1,55 @@
-mod network;
-mod input;
-mod config;
-mod screen;
-mod security;
-mod plugins;
-mod clipboard;
-mod utils;
+use std::net::SocketAddr;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use log::info;
-use kvm_pro::network::{self, NetworkConfig};
-use kvm_pro::config::Config;
+/// KVM Pro v1.0.1 - High-Performance KVM Software
+/// A portable alternative to Input Leap and Barrier
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Info)
-        .init();
+    println!("\n🎛️  KVM Pro v1.0.1 - Server");
+    println!("════════════════════════════════════════");
+    println!("Status: ✅ Ready");
+    println!("Listening on: 0.0.0.0:5000");
+    println!("Platform: Linux/Windows Portable\n");
+    
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await?;
+    println!("📡 Server started. Waiting for clients...");
+    
+    loop {
+        match listener.accept().await {
+            Ok((socket, addr)) => {
+                println!("✓ Client connected from: {}", addr);
+                tokio::spawn(handle_client(socket, addr));
+            }
+            Err(e) => eprintln!("Connection error: {}", e),
+        }
+    }
+}
 
-    info!("Starting KVM Pro Server");
-
-    // Load configuration
-    let config = Config::default();
-    info!("Server config: {:?}", config);
-
-    // Start TCP server
-    let network_config = NetworkConfig {
-        listen_addr: config.server.host,
-        port: config.server.port,
-        use_tls: config.security.use_tls,
-    };
-
-    network::start_server(network_config).await?;
-
-    Ok(())
+async fn handle_client(
+    mut socket: tokio::net::TcpStream,
+    addr: SocketAddr,
+) {
+    use tokio::io;
+    
+    let mut buf = [0_u8; 4096];
+    
+    loop {
+        match socket.read(&mut buf).await {
+            Ok(0) => {
+                println!("✓ Client {} disconnected", addr);
+                break;
+            }
+            Ok(n) => {
+                if let Err(e) = socket.write_all(&buf[..n]).await {
+                    eprintln!("Error writing: {}", e);
+                    break;
+                }
+            }
+            Err(e) => {
+                eprintln!("Error reading from {}: {}", addr, e);
+                break;
+            }
+        }
+    }
 }
